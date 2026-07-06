@@ -202,15 +202,20 @@ class IndividualTasksLoss(nn.Module):
             task_batch_dict = {}
             task_node_dict = {'mixed': torch.ones_like(unfixed_node)}
             task_edge_dict = {'mixed': torch.ones_like(unfixed_halfedge)}
-            task_dih_dict = {'mixed': torch.ones(len(batch['dihedral_pairs_anno']), device=device, dtype=torch.bool)}
+            if 'dihedral_pairs_anno' in batch:
+                task_dih_dict = {'mixed': torch.ones(len(batch['dihedral_pairs_anno']), device=device, dtype=torch.bool)}
+            else:
+                task_dih_dict = None
             batch_node = batch['node_type_batch']
             batch_halfedge = batch['halfedge_type_batch']
-            batch_dih = batch_node.index_select(0, batch['dihedral_pairs_anno'][:,1])
+            if task_dih_dict is not None:
+                batch_dih = batch_node.index_select(0, batch['dihedral_pairs_anno'][:,1])
             for task in task_list:
                 task_batch_dict[task] = torch.tensor([t==task for t in batch['task']], device=device)
                 task_node_dict[task] = task_batch_dict[task].index_select(0, batch_node)
                 task_edge_dict[task] = task_batch_dict[task].index_select(0, batch_halfedge)
-                task_dih_dict[task] = task_batch_dict[task].index_select(0, batch_dih)
+                if task_dih_dict is not None:
+                    task_dih_dict[task] = task_batch_dict[task].index_select(0, batch_dih)
         else:
             task_list = []
             task_batch_dict, task_node_dict, task_edge_dict, task_dih_dict = None, None, None, None
@@ -220,9 +225,11 @@ class IndividualTasksLoss(nn.Module):
             self.node_loss(node_type, pred_node, unfixed_node, task_node_dict),
             self.pos_loss(node_pos, pred_pos, unfixed_pos, task_node_dict),
             self.halfedge_loss(halfedge_type, pred_halfedge, unfixed_halfedge, task_edge_dict, size_node),
-            self.dist_loss(gt_dist, pred_dist, unfixed_dist, batch, task_edge_dict),
-            self.dihedral_loss(node_pos, pred_pos, batch, task_dih_dict),
         ]
+        if 'domain_node_index' in batch:
+            loss_list.append(self.dist_loss(gt_dist, pred_dist, unfixed_dist, batch, task_edge_dict))
+        if 'dihedral_pairs_anno' in batch:
+            loss_list.append(self.dihedral_loss(node_pos, pred_pos, batch, task_dih_dict))
         loss_dict = {k:v for d in loss_list for k,v in d.items()}
 
         # # total los

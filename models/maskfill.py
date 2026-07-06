@@ -144,10 +144,11 @@ class PMAsymDenoiser(Module):
         h_edge_in = torch.cat([h_halfedge_in, h_halfedge_in], dim=0)
         edge_extra = torch.cat([halfedge_extra, halfedge_extra], dim=0)
         
-        # Add additional node features (e.g., peptide indicator)
-        if 'is_peptide' in self.addition_node_features:
-            is_peptide = batch['is_peptide'].unsqueeze(-1).to(pos_in.dtype)
-            h_node_in = torch.cat([h_node_in, is_peptide], dim=-1)
+        # Add configured ligand/backend indicators.
+        for feat_name in self.addition_node_features:
+            if feat_name in batch:
+                feat = batch[feat_name].unsqueeze(-1).to(pos_in.dtype)
+                h_node_in = torch.cat([h_node_in, feat], dim=-1)
         
         # Step 2: Encode protein pocket as context
         h_pocket = self.pocket_embedder(batch['pocket_atom_feature'])
@@ -199,4 +200,3 @@ class PMAsymDenoiser(Module):
             'pred_halfedge': pred_halfedge,
             **additional_outputs,
         }
-

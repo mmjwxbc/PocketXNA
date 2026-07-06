@@ -47,7 +47,7 @@ from utils.dataset import ForeverTaskDataset
 from utils.misc import *
 from utils.sample_noise import get_sample_noiser
 from utils.train import GradualWarmupScheduler, get_optimizer, get_scheduler
-from utils.transforms import Compose, FeaturizeMol, FeaturizePocket, get_transforms
+from utils.transforms import Compose, get_transforms
 
 torch.set_float32_matmul_precision('medium')
 
@@ -96,9 +96,13 @@ class DataModule(pl.LightningDataModule):
         Returns:
             List of featurizer transforms (pocket featurizer if present, then mol featurizer)
         """
-        featurizer = FeaturizeMol(self.config.transforms.featurizer)
+        if 'name' not in self.config.transforms.featurizer:
+            self.config.transforms.featurizer.name = 'featurizer_mol'
+        featurizer = get_transforms(self.config.transforms.featurizer)
         if 'featurizer_pocket' in self.config.transforms:
-            feat_pocket = FeaturizePocket(self.config.transforms.featurizer_pocket)
+            if 'name' not in self.config.transforms.featurizer_pocket:
+                self.config.transforms.featurizer_pocket.name = 'featurizer_pocket'
+            feat_pocket = get_transforms(self.config.transforms.featurizer_pocket)
             return [feat_pocket, featurizer]  # pocket first because mol need to substract pocket center
         else:
             return [featurizer]
@@ -153,12 +157,12 @@ class DataModule(pl.LightningDataModule):
 
         # # Dataloaders
         train_cfg = self.config.train
-        self.train_loader = DataLoader(train_set, batch_size=train_cfg.batch_size if not is_vscode else 40,
+        self.train_loader = DataLoader(train_set, batch_size=train_cfg.batch_size,
                                        num_workers=train_cfg.num_workers, pin_memory=train_cfg.pin_memory,
                                        follow_batch=follow_batch, exclude_keys=exclude_keys,
                                        persistent_workers=train_cfg.persistent_workers,
         )
-        self.val_loader = DataLoader(val_set, batch_size=train_cfg.batch_size if not is_vscode else 40,
+        self.val_loader = DataLoader(val_set, batch_size=train_cfg.batch_size,
                                      num_workers=train_cfg.num_workers//divider, pin_memory=train_cfg.pin_memory,
                                      follow_batch=follow_batch, exclude_keys=exclude_keys,
                                      persistent_workers=train_cfg.persistent_workers,

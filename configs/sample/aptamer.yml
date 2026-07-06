@@ -1,0 +1,2 @@
+model:
+  checkpoint: data/trained_models/aptamer/checkpoints/aptamerxmol.ckpt

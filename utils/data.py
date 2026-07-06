@@ -31,12 +31,24 @@ def inc_func_mol3d(self, key, value, *args, **kwargs):
     elif key == 'halfedge_index':
         return len(self['node_type'])
     # for linking
-    elif key in ['node_p1', 'node_p2', 'node_bb', 'node_sc'] or key.startswith('node_part_'):  # index of node of part in mol
+    elif key in [
+        'node_p1', 'node_p2',
+        'node_bb', 'node_sc',
+        'node_backbone', 'node_base',
+        'node_sugar', 'node_phosphate',
+        'node_binding_motif', 'node_fixed_motif',
+    ] or key.startswith('node_part_'):  # index of node of part in mol
         return len(self['node_type'])
     elif key in ['halfedge_p1', 'halfedge_p2', 'halfedge_p1p2',
-                 'halfedge_bb', 'halfedge_sc', 'halfedge_bbsc'] or\
+                 'halfedge_bb', 'halfedge_sc', 'halfedge_bbsc',
+                 'halfedge_backbone', 'halfedge_base',
+                 'halfedge_pairing', 'halfedge_motif'] or\
                      key.startswith('halfedge_part_'):  # index of halfedge of part in mol
         return len(self['halfedge_type'])
+    elif key in ['na_pair_index', 'base_pair_index']:
+        return len(self['node_type'])
+    elif key in ['na_res_pair_index']:
+        return self['na_num_residues']
     # for rigid and torsional
     elif key == 'domain_node_index':
         return torch.tensor([[self['n_domain']], [len(self['node_type'])]]) # [2, 1]
@@ -66,9 +78,9 @@ class PocketMolData(Data):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    @staticmethod
-    def from_pocket_mol_dicts(pocket_dict=None, mol_dict=None, **kwargs):
-        instance = PocketMolData(**kwargs)
+    @classmethod
+    def from_pocket_mol_dicts(cls, pocket_dict=None, mol_dict=None, **kwargs):
+        instance = cls(**kwargs)
 
         if pocket_dict is not None:
             for key, item in pocket_dict.items():
@@ -92,6 +104,12 @@ class PocketMolData(Data):
             return inc
         # undefined
         return super().__inc__(key, value, *args, **kwargs)
+
+
+class PocketComplexData(PocketMolData):
+    """Alias class for protein-ligand complexes with pluggable ligand backends."""
+
+    pass
 
 
 class Mol3DData(Data):

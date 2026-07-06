@@ -1761,3 +1761,9 @@ class CustomSampleNoiser(BaseSampleNoiser):
             halfedge_part_corr = torch.concat([batch[f'halfedge_part_{part[0]}_{part[1]}'] for 
                                 part in self.correction['edge']])
             halfedge_corrected = batch[halfedge_part_corr]
+
+
+try:
+    from utils.aptamer_noise import *
+except ImportError:
+    pass

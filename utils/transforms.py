@@ -632,6 +632,7 @@ class VariableMolSize(object):  # for sampling
 
 
 
+@register_transforms('featurizer_pocket')
 class FeaturizePocket(object):
 
     def __init__(self, config):
@@ -709,6 +710,7 @@ class FeaturizePocket(object):
         return data
 
 
+@register_transforms('featurizer_mol')
 class FeaturizeMol(object):
     def __init__(self, config):
         super().__init__()
@@ -796,8 +798,11 @@ class FeaturizeMol(object):
         
         if self.is_peptide:
             data['is_peptide'] = torch.ones([data.num_nodes], dtype=torch.long)
+            data['ligand_type'] = 'peptide'
         else:
             data['is_peptide'] = torch.zeros([data.num_nodes], dtype=torch.long)  # default is not peptide
+            data['ligand_type'] = 'smallmol'
+        data['is_nucleic'] = torch.zeros([data.num_nodes], dtype=torch.long)
 
         return data
     
@@ -2573,3 +2578,10 @@ class CustomTransform:
 
         data.update(data_partition)
         return data, num_part_dict
+
+
+try:
+    from utils.nucleic_transforms import *
+    from utils.aptamer_task import *
+except ImportError:
+    pass

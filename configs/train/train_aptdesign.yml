@@ -1,0 +1,134 @@
+model:
+  name: pm_asym_denoiser
+  pocket_dim: 128
+  node_dim: 320
+  addition_node_features:
+    - is_peptide
+    - is_nucleic
+    - na_is_phosphate
+    - na_is_sugar
+    - na_is_base
+  edge_dim: 96
+  pocket:
+    edge_dim: 32
+    hidden_dim: 128
+    num_blocks: 4
+    dist_cfg:
+      num_gaussians: 32
+  denoiser:
+    hidden_dim: 320
+    num_blocks: 6
+    dist_cfg:
+      stop: 15
+      num_gaussians: 64
+    gate_dim: 2
+    context_cfg:
+      edge_dim: 128
+      knn: 32
+      dist_cfg:
+        stop: 20
+        num_gaussians: 64
+        type_: linear
+
+loss:
+  name: individual_tasks
+  weights:
+    node: 1.5
+    pos: 2.5
+    edge: 1.5
+    fixed_node: 0.1
+    fixed_pos: 0.1
+    fixed_edge: 0.1
+  tasks: [aptdesign]
+
+noise:
+  name: aptdesign
+  num_steps: 100
+  prior:
+    node:
+      name: categorical
+      prior_type: predefined
+      prior_probs: [10, 8, 12, 4, 1]
+    pos:
+      name: allpos
+      pos:
+        name: gaussian_simple
+        sigma_max: 1
+    edge:
+      name: categorical
+      prior_type: tomask_half
+  level:
+    name: advance
+    min: 0.0
+    max: 1.0
+    step2level:
+      scale_start: 0.99999
+      scale_end: 0.00001
+      width: 3
+
+transforms:
+  featurizer_pocket:
+    name: featurizer_pocket
+    knn: 32
+  featurizer:
+    name: featurizer_aptamer
+    nucleic_type: RNA
+    use_mask_node: true
+    use_mask_edge: true
+    chem:
+      atomic_numbers: [6, 7, 8, 15]
+      mol_bond_types: [1, 2, 3, 4]
+  task:
+    name: aptdesign
+    settings:
+      mode:
+        denovo: 0.5
+        optimize: 0.3
+        fixed_motif: 0.2
+      structure:
+        free: 0.6
+        motif_fixed: 0.4
+
+data:
+  dataset:
+    root: data_train
+    assembly_path: assemblies/split_aptamer_assembly.lmdb
+    dbs:
+      - name: aptamer
+        lmdb_root: aptamer/lmdb
+        lmdb_path:
+          aptamer: aptamer.lmdb
+  task_db_weights:
+    aptdesign:
+      weight: 1.0
+      db_ratio:
+        aptamer: 1.0
+
+train:
+  seed: 2023
+  batch_size: 1
+  num_workers: 1
+  pin_memory: true
+  max_steps: 180000
+  ckpt_every_n_steps: 1000
+  val_check_interval: &val_check_interval 1000
+  precision: bf16-mixed
+  persistent_workers: true
+  optimizer:
+    type: adamw
+    lr: 1.e-3
+    weight_decay: 1.e-3
+    beta1: 0.99
+    beta2: 0.999
+  scheduler:
+    warmup_step: 1000
+    instance:
+      type: plateau
+      factor: 0.75
+      patience: 20
+      min_lr: 1.e-5
+      cooldown: 10
+    params:
+      interval: step
+      frequency: *val_check_interval
+      monitor: val/loss

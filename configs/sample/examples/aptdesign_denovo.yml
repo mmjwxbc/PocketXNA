@@ -1,0 +1,49 @@
+sample:
+  seed: 2024
+  batch_size: 16
+  num_mols: 64
+  save_traj_prob: 0.02
+
+data:
+  protein_path: data/examples/aptamer/target_protein.pdb
+  input_aptamer: data/examples/aptamer/template_aptamer.pdb
+  nucleic_type: RNA
+  pocket_args:
+    pocket_coord: [0.0, 0.0, 0.0]
+    radius: 20
+  pocmol_args:
+    data_id: apt_target_001
+    pdbid: target_001
+
+transforms:
+  featurizer:
+    name: featurizer_aptamer
+    nucleic_type: RNA
+    use_mask_node: true
+    use_mask_edge: true
+    chem:
+      atomic_numbers: [6, 7, 8, 15]
+      mol_bond_types: [1, 2, 3, 4]
+
+task:
+  name: aptdesign
+  transform:
+    name: aptdesign
+    settings:
+      mode:
+        denovo: 1
+      structure:
+        free: 1
+
+noise:
+  name: aptdesign
+  num_steps: 100
+  prior: from_train
+  level:
+    name: advance
+    min: 0.0
+    max: 1.0
+    step2level:
+      scale_start: 0.99999
+      scale_end: 0.00001
+      width: 3
