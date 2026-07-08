@@ -1,0 +1,28 @@
+.vscode
+.venv
+outputs_examples
+tmp
+vscode
+*.ckpt
+*.lmdbs
+data_train/
+*.lmdb
+*.lmdb-lock
+lightning_logs*/
+vscode/
+tmp/
+
+# downloaded model weights (re-fetch via tar.gz from Zenodo)
+data/trained_models/
+
+# build / packaging caches
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# agent / editor metadata
+.agents/
+.codex/
+.claude/

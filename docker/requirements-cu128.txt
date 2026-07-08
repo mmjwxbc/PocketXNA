@@ -1,0 +1,13 @@
+--index-url https://download.pytorch.org/whl/cu128
+--extra-index-url https://pypi.org/simple
+--find-links https://data.pyg.org/whl/torch-2.8.0+cu128.html
+
+lightning==2.6.5
+pytorch-lightning==2.6.5
+torch==2.8.0
+torch-geometric==2.8.0
+torch-cluster==1.6.3+pt28cu128
+torch-scatter==2.1.2+pt28cu128
+torch-sparse==0.6.18+pt28cu128
+torch-spline-conv==1.2.2+pt28cu128
+pyg-lib==0.6.0+pt28cu128
